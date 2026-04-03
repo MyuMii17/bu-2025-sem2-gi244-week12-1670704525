@@ -7,19 +7,24 @@ using UnityEngine.EventSystems;
 /// it requires UI/EventSystem on scene, and the main camera should attach PhysicsRaycaster.
 public class Target : MonoBehaviour, IPointerClickHandler
 {
-    private float minSpeed = 12;
-    private float maxSpeed = 16;
+    private float minSpeed = 14;
+    private float maxSpeed = 17;
     private float maxTorque = 10;
     private float xRange = 4;
     private float ySpawnPos = -6;
     private Rigidbody rb;
+    private GameManager gm;
 
     public int point;
     public ParticleSystem explosionParticle;
 
     void Start()
     {
+        gm = FindAnyObjectByType<GameManager>();
         rb = GetComponent<Rigidbody>();
+        rb.AddForce(RandomForce(), ForceMode.Impulse);
+        rb.AddTorque(RandomTorque(), RandomTorque(), RandomTorque());
+        transform.position = RandomSpawnPos();
     }
 
     Vector3 RandomForce()
@@ -40,11 +45,32 @@ public class Target : MonoBehaviour, IPointerClickHandler
     // NOTE: OnPointerClick is part of IPointerClickHandler interface
     public void OnPointerClick(PointerEventData eventData)
     {
+        Destroy(this.gameObject);
+        if (gameObject.CompareTag("Bad"))
+        {
+            gm.UpdateScore(-point);
+        }
+        else
+        {
+            gm.UpdateScore(point);
+        }
 
+        Instantiate(explosionParticle, transform.position, Quaternion.identity);
     }
 
     private void OnTriggerEnter(Collider other)
     {
-
+        if (other.CompareTag("Sensor"))
+        {
+            if (gameObject.CompareTag("Bad"))
+            {
+                gm.UpdateScore(point);
+            }
+            else
+            {
+                gm.UpdateScore(-point);
+            }
+            Destroy(this.gameObject);
+        }
     }
 }
